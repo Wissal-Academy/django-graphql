@@ -1,4 +1,5 @@
 import graphene
+from graphene import relay
 from graphene_django import DjangoObjectType, DjangoConnectionField
 from graphql import GraphQLError
 
@@ -18,6 +19,8 @@ class CategoryType(DjangoObjectType):
         model = Category
         fields = '__all__'
         description = 'Just a category description'
+        filter_fields = ['name']
+        interfaces = (relay.node, )
 
     def resolve_product_count(self, info):
         return self.products.count()
@@ -30,12 +33,17 @@ class ProductType(DjangoObjectType):
         model = Product
         fields = '__all__'
         description = 'Just a Product description'
+        filter_fields = ['name']
+        interfaces = (relay.node, )
 
     def resolve_is_in_stock(self, info):
         return self.stock_quantity > 0
 
 
 class Query(graphene.ObjectType):
+
+    node = relay.Node.Field()
+
     products = DjangoConnectionField(
         ProductType,
         description="List all the products with pagination and filtering",
@@ -93,13 +101,14 @@ class CreateProduct(graphene.Mutation):
             category=category_id
         )
         product.save()
+        return CreateProduct(product=product)
+
 
 class Mutation(graphene.ObjectType):
     create_product = CreateProduct.Field()
 
 
-
 schema = graphene.Schema(
-    query=Query
-    
-    )
+    query=Query,
+    mutation=Mutation
+)
