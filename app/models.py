@@ -43,7 +43,7 @@ class Category(WaBaseModel):
             Order by name
             Indexes for DB optimization
         '''
-        # verbose_name_plural = 'Categories'
+        verbose_name_plural = 'Categories'
         ordering = ['name']
         indexes = [
             models.Index(fields=['name']),

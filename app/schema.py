@@ -4,6 +4,7 @@ from graphql import GraphQLError
 
 from .models import Category, Product
 
+
 class CategoryType(DjangoObjectType):
     product_count = graphene.Int(description="Number of products in this category")
 
@@ -15,6 +16,7 @@ class CategoryType(DjangoObjectType):
     def resolve_product_count(self, info):
         return self.products.count()
 
+
 class ProductType(DjangoObjectType):
     is_in_stock = graphene.Boolean()
 
@@ -25,6 +27,7 @@ class ProductType(DjangoObjectType):
 
     def resolve_is_in_stock(self, info):
         return self.stock_quantity > 0
+
 
 class Query(graphene.ObjectType):
     products = graphene.List(
@@ -67,26 +70,46 @@ class Query(graphene.ObjectType):
         except Category.DoesNotExist:
             raise GraphQLError(f"Category with id {id} does not exist")
 
+
 class CreateProduct(graphene.Mutation):
     class Arguments:
         name = graphene.String(required=True)
         description = graphene.String(required=True)
         price = graphene.Float(required=True)
+        sku = graphene.String(required=True)
         category_id = graphene.ID(required=True)
 
     product = graphene.Field(ProductType)
 
-    def mutate(self, info, name, description, price, category_id):
+    def mutate(self, info, name, description, price, category_id, sku):
         category = Category.objects.get(pk=category_id)
         product = Product.objects.create(
             name=name,
             description=description,
             price=price,
-            category=category
+            category=category,
+            sku=sku
         )
         return CreateProduct(product=product)
 
+
+class CreateCategory(graphene.Mutation):
+    class Arguments:
+        name = graphene.String(required=True)
+
+    category = graphene.Field(CategoryType)
+
+    def mutate(self, info, name):
+        category = Category.objects.create(name=name)
+        return CreateCategory(category=category)
+
+
 class Mutation(graphene.ObjectType):
     create_product = CreateProduct.Field()
+    create_category = CreateCategory.Field()
 
-schema = graphene.Schema(query=Query, mutation=Mutation)
+
+schema = graphene.Schema(
+    query=Query,
+    mutation=Mutation
+)
