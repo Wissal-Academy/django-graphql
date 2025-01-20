@@ -64,7 +64,7 @@ class Query(graphene.ObjectType):
         if min_price:
             queryset = queryset.filter(price__gte=Decimal(str(min_price)))
         if max_price:
-            queryset = queryset.filter(price__lte=Decimal(str(min_price)))
+            queryset = queryset.filter(price__lte=Decimal(str(max_price)))
         if in_stock:
             queryset = queryset.filter(stock_quantity_gt=0 if in_stock else 0)
         return queryset
