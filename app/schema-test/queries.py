@@ -11,13 +11,11 @@ class Query(graphene.ObjectType):
     products = DjangoConnectionField(
         ProductType,
         description="List all the products with pagination and filtering",
-        active=graphene.Boolean(description="Filter by active Status")
+        active=graphene.Boolean(description="Filter by active Status"),
     )
 
     product = graphene.Field(
-        ProductType,
-        id=graphene.ID(required=True),
-        description="Get product by Id"
+        ProductType, id=graphene.ID(required=True), description="Get product by Id"
     )
 
     # resolve_product --> product
@@ -31,13 +29,11 @@ class Query(graphene.ObjectType):
     categories = DjangoConnectionField(
         CategoryType,
         description="List all the categories with pagination and filtering",
-        active=graphene.Boolean(description="Filter by active Status")
+        active=graphene.Boolean(description="Filter by active Status"),
     )
 
     category = graphene.Field(
-        CategoryType,
-        id=graphene.ID(required=True),
-        description="Get category by Id"
+        CategoryType, id=graphene.ID(required=True), description="Get category by Id"
     )
 
     # resolve_category --> category
@@ -46,7 +42,6 @@ class Query(graphene.ObjectType):
             return Category.objects.get(pk=id)
         except Category.DoesNotExist:
             raise GraphQLError(f"Category with {id} does not exist")
-
 
 
 schema = graphene.Schema(query=Query)

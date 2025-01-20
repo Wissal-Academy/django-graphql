@@ -10,8 +10,8 @@ class CategoryType(DjangoObjectType):
 
     class Meta:
         model = Category
-        fields = '__all__'
-        description = 'Just a category description'
+        fields = "__all__"
+        description = "Just a category description"
 
     def resolve_product_count(self, info):
         return self.products.count()
@@ -22,8 +22,8 @@ class ProductType(DjangoObjectType):
 
     class Meta:
         model = Product
-        fields = '__all__'
-        description = 'Just a Product description'
+        fields = "__all__"
+        description = "Just a Product description"
 
     def resolve_is_in_stock(self, info):
         return self.stock_quantity > 0
@@ -32,28 +32,42 @@ class ProductType(DjangoObjectType):
 class Query(graphene.ObjectType):
     products = graphene.List(
         ProductType,
+        name=graphene.String(),
+        min_price=graphene.Decimal(),
+        max_price=graphene.Decimal(),
+        in_stock=graphene.Boolean(),
         description="List all the products"
     )
-    
+
     product = graphene.Field(
-        ProductType,
-        id=graphene.ID(required=True),
-        description="Get product by Id"
+        ProductType, id=graphene.ID(required=True), description="Get product by Id"
     )
 
-    categories = graphene.List(
-        CategoryType,
-        description="List all the categories"
-    )
-    
+    categories = graphene.List(CategoryType, description="List all the categories")
+
     category = graphene.Field(
-        CategoryType,
-        id=graphene.ID(required=True),
+        CategoryType, id=graphene.ID(required=True),
         description="Get category by Id"
     )
 
-    def resolve_products(self, info):
-        return Product.objects.all()
+    def resolve_products(
+            self,
+            info,
+            name=None,
+            min_price=None,
+            max_price=None,
+            in_stock=None
+            ):
+        queryset = Product.objects.all()
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+        if min_price:
+            queryset = queryset.filter(price__gte=Decimal(str(min_price)))
+        if max_price:
+            queryset = queryset.filter(price__lte=Decimal(str(min_price)))
+        if in_stock:
+            queryset = queryset.filter(stock_quantity_gt=0 if in_stock else 0)
+        return queryset
 
     def resolve_product(self, info, id):
         try:
@@ -88,7 +102,7 @@ class CreateProduct(graphene.Mutation):
             description=description,
             price=Decimal(str(price)),
             category=category,
-            sku=sku
+            sku=sku,
         )
         return CreateProduct(product=product)
 
@@ -104,13 +118,8 @@ class UpdateProduct(graphene.Mutation):
     product = graphene.Field(ProductType)
 
     def mutate(
-            self,
-            info,
-            id,
-            name=None,
-            descrption=None,
-            price=None,
-            category_id=None):
+        self, info, id, name=None, descrption=None, price=None, category_id=None
+    ):
         product = Product.objects.get(pk=id)
         if name:
             product.name = name
@@ -137,7 +146,7 @@ class DeleteProduct(graphene.Mutation):
             product.delete()
             return DeleteProduct(success=True)
         except Product.DoesNotExist:
-            raise GraphQLError(f'Product with id: {id} does not exists')
+            raise GraphQLError(f"Product with id: {id} does not exists")
 
 
 class CreateCategory(graphene.Mutation):
@@ -149,7 +158,7 @@ class CreateCategory(graphene.Mutation):
     def mutate(self, info, name):
         category = Category.objects.create(name=name)
         return CreateCategory(category=category)
-    
+
 
 class UpdateCategory(graphene.Mutation):
     class Arguments:
@@ -165,8 +174,8 @@ class UpdateCategory(graphene.Mutation):
             category.save()
             return UpdateCategory(category=category)
         except Category.DoesNotExist:
-            raise GraphQLError(f'Category with id: {id} does not exists')
-        
+            raise GraphQLError(f"Category with id: {id} does not exists")
+
 
 class DeleteCategory(graphene.Mutation):
     class Arguments:
@@ -180,7 +189,7 @@ class DeleteCategory(graphene.Mutation):
             product.delete()
             return DeleteCategory(success=True)
         except Category.DoesNotExist:
-            raise GraphQLError(f'Category with id: {id} does not exists')
+            raise GraphQLError(f"Category with id: {id} does not exists")
 
 
 class Mutation(graphene.ObjectType):
@@ -193,7 +202,4 @@ class Mutation(graphene.ObjectType):
     delete_category = DeleteCategory.Field()
 
 
-schema = graphene.Schema(
-    query=Query,
-    mutation=Mutation
-)
+schema = graphene.Schema(query=Query, mutation=Mutation)

@@ -6,17 +6,16 @@ from ..models import Category, Product
 
 class CategoryType(DjangoObjectType):
     """
-        Definition
+    Definition
 
     """
-    product_count = graphene.Int(
-        description="Number of products in this category"
-        )
+
+    product_count = graphene.Int(description="Number of products in this category")
 
     class Meta:
         model = Category
-        fields = '__all__'
-        description = 'Just a category description'
+        fields = "__all__"
+        description = "Just a category description"
 
     def resolve_product_count(self, info):
         # resolve_<name_of_the_function> --> nameOfTheFunction :: GraphQL
@@ -28,8 +27,8 @@ class ProductType(DjangoObjectType):
 
     class Meta:
         model = Product
-        fields = '__all__'
-        description = 'Just a Product description'
+        fields = "__all__"
+        description = "Just a Product description"
 
     def resolve_is_in_stock(self, info):
         return self.stock_quantity > 0
