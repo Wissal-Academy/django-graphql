@@ -1,7 +1,7 @@
 import graphene
 from graphene_django import DjangoObjectType
 from graphql import GraphQLError
-
+from decimal import Decimal
 from .models import Category, Product
 
 
@@ -75,7 +75,7 @@ class CreateProduct(graphene.Mutation):
     class Arguments:
         name = graphene.String(required=True)
         description = graphene.String(required=True)
-        price = graphene.Float(required=True)
+        price = graphene.Decimal(required=True)
         sku = graphene.String(required=True)
         category_id = graphene.ID(required=True)
 
@@ -86,11 +86,43 @@ class CreateProduct(graphene.Mutation):
         product = Product.objects.create(
             name=name,
             description=description,
-            price=price,
+            price=Decimal(str(price)),
             category=category,
             sku=sku
         )
         return CreateProduct(product=product)
+
+
+class UpdateProduct(graphene.Mutation):
+    class Arguments:
+        id = graphene.ID(required=True)
+        name = graphene.String()
+        description = graphene.String()
+        price = graphene.Decimal()
+        category_id = graphene.ID()
+
+    product = graphene.Field(ProductType)
+
+    def mutate(
+            self,
+            info,
+            id,
+            name=None,
+            descrption=None,
+            price=None,
+            category_id=None):
+        product = Product.objects.get(pk=id)
+        if name:
+            product.name = name
+        if descrption:
+            product.descrption = descrption
+        if price:
+            product.price = Decimal(str(price))
+        if category_id:
+            # ForeingKey
+            product.category = Category.objects.get(pk=category_id)
+        product.save()
+        return UpdateProduct(product=product)
 
 
 class CreateCategory(graphene.Mutation):
@@ -106,6 +138,8 @@ class CreateCategory(graphene.Mutation):
 
 class Mutation(graphene.ObjectType):
     create_product = CreateProduct.Field()
+    update_product = UpdateProduct.Field()
+
     create_category = CreateCategory.Field()
 
 
