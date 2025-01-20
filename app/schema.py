@@ -125,6 +125,21 @@ class UpdateProduct(graphene.Mutation):
         return UpdateProduct(product=product)
 
 
+class DeleteProduct(graphene.Mutation):
+    class Arguments:
+        id = graphene.ID(required=True)
+
+    success = graphene.Boolean()
+
+    def mutate(self, info, id):
+        try:
+            product = Product.objects.get(pk=id)
+            product.delete()
+            return DeleteProduct(success=True)
+        except Product.DoesNotExist:
+            raise GraphQLError(f'Product with id: {id} does not exists')
+
+
 class CreateCategory(graphene.Mutation):
     class Arguments:
         name = graphene.String(required=True)
@@ -134,13 +149,48 @@ class CreateCategory(graphene.Mutation):
     def mutate(self, info, name):
         category = Category.objects.create(name=name)
         return CreateCategory(category=category)
+    
+
+class UpdateCategory(graphene.Mutation):
+    class Arguments:
+        id = graphene.ID(required=True)
+        name = graphene.String(required=True)
+
+    category = graphene.Field(CategoryType)
+
+    def mutate(self, info, id, name):
+        try:
+            category = Category.objects.get(pk=id)
+            category.name = name
+            category.save()
+            return UpdateCategory(category=category)
+        except Category.DoesNotExist:
+            raise GraphQLError(f'Category with id: {id} does not exists')
+        
+
+class DeleteCategory(graphene.Mutation):
+    class Arguments:
+        id = graphene.ID(required=True)
+
+    success = graphene.Boolean()
+
+    def mutate(self, info, id):
+        try:
+            product = Category.objects.get(pk=id)
+            product.delete()
+            return DeleteCategory(success=True)
+        except Category.DoesNotExist:
+            raise GraphQLError(f'Category with id: {id} does not exists')
 
 
 class Mutation(graphene.ObjectType):
     create_product = CreateProduct.Field()
     update_product = UpdateProduct.Field()
+    delete_product = DeleteProduct.Field()
 
     create_category = CreateCategory.Field()
+    update_category = UpdateCategory.Field()
+    delete_category = DeleteCategory.Field()
 
 
 schema = graphene.Schema(
